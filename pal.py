@@ -12,9 +12,11 @@ def run(file_name:str = 'words.txt', line_max_len:int = 5):
 
     letters = 'abcdefghijklmnopqrstuvwxyz'
 
+    # Initialize pairs dict
     pairs = {}
     for letter in letters:
         pairs[letter] = {'count':0, 'left': {}, 'right': {}}
+
 
     # validate idividual lines
     def validate_line(line:str):
@@ -30,6 +32,26 @@ def run(file_name:str = 'words.txt', line_max_len:int = 5):
 
         return line.lower()
 
+    
+    def pretty_print(pairs): 
+
+        for letter in pairs:
+
+            if pairs[letter]['count'] == 0:
+                continue
+
+            print('\n' + letter + ': ' + str(pairs[letter]['count']))
+
+            print('Left: ')
+            for left in pairs[letter]['left']:
+                print(left + ': ' + str(pairs[letter]['left'][left]))
+
+            print('Right: ')
+            for right in pairs[letter]['right']:
+                print(right + ': ' + str(pairs[letter]['right'][right]))
+
+
+    # count the letter pairs in a line, including BOL and EOL as a letter
     def count_pairs(line:str):
 
         def increment(c:str, left:str, right:str):
@@ -72,9 +94,9 @@ def run(file_name:str = 'words.txt', line_max_len:int = 5):
             increment(c, left, right)
 
                 
-            
     f = open(file_name, 'r')
     
+    # Main loop over each line in file
     while line := f.readline(line_max_len + 2):  # one for the newline, one for over max_len
         line = validate_line(line)
         line_count += 1
@@ -82,7 +104,9 @@ def run(file_name:str = 'words.txt', line_max_len:int = 5):
         count_pairs(line)
 
     print('Processed ' + str(line_count) + ' lines')
-    print(pairs)
+
+    pretty_print(pairs)
+
     f.close()
 
 run()
