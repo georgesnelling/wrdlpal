@@ -147,7 +147,7 @@ def run():
         line_count += 1
         letter_count += len(line)
         count_pairs(line)
-        print(line)
+        # print(line)
 
     # sort dicts into lists by count descending
     sort_pairs_by_count(pairs)
