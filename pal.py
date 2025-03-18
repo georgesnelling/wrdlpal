@@ -22,12 +22,19 @@ def run():
             'count':0, 
             'points': 0, 
             'left': {}, 
-            'left_sorted': [],
             'left_points': [], 
             'right': {},
-            'right_sorted': [],
             'right_points': []
         }
+
+
+    # Untility debugger
+    def inspect(pairs):
+        print('INSPECT PAIRS')
+        for letter in pairs:
+            print('\n' + letter)
+            for k in pairs[letter]:
+                print(k,pairs[letter][k])
 
 
     # validate idividual lines
@@ -45,32 +52,33 @@ def run():
         return line.lower()
 
     
+    "Print Human-Readable Summary Output as Text"
     def pretty_print(pairs): 
+
+        print('WordlePal')
+        print('Letter Points:', tot_letter_points)
+        print('Pair Points:', tot_pair_points)
+        print('Words Processed:', line_count)
+        print('Letters Processed:', letter_count)
 
         for letter in pairs:
 
+            # Skip empty letters
             if pairs[letter]['count'] == 0:
                 continue
             
-            print('\n' + letter + ': ' + str(pairs[letter]['points']) + '/' + str(tot_letter_points))
+            # Print the top-level letter and its points
+            print('\n' + letter + ':', (pairs[letter]['points']))
 
-            print('Left: ', end='')
-            for point in pairs[letter]['left_points']:
-                print(' ' + point[0] + ':' + str(point[1]), end='')
-            print()
-
-            print('Right:', end='')
-            for point in pairs[letter]['right_points']:
-                print(' ' + point[0] + ':' + str(point[1]), end='')
-            print()
+            # Print the left and right pairs and their points
+            keys = [('Left: ', 'left_points'), ('Right:', 'right_points')]
+            for k in keys:
+                print(k[0], end='')
+                for point in pairs[letter][k[1]]:
+                    print(' ' + point[0] + ':' + str(point[1]), end='')
+                print()
 
     
-    def sort_pairs_by_count(pairs):
-        for letter in pairs:
-            pairs[letter]['left_sorted'] = list(sorted(pairs[letter]['left'].items(), key=lambda x:x[1], reverse=True))
-            pairs[letter]['right_sorted'] = list(sorted(pairs[letter]['right'].items(), key=lambda x:x[1], reverse=True))
-
-
     # Calculate normalized points for letters and pairs independent of sample size
     def score(pairs, letter_count):
 
@@ -79,24 +87,20 @@ def run():
             # Calculate the points for the letter itself
             pairs[letter]['points'] = round(pairs[letter]['count'] / letter_count * tot_letter_points)
 
-            # TODO:  create helper to get rid of duped logic
-            left_points = []
-            for toup in pairs[letter]['left_sorted']:
-                pair_points = round(toup[1] / letter_count * tot_pair_points)
-                if pair_points >= pair_points_cutoff:
-                    left_points.append((toup[0], pair_points))
-            pairs[letter]['left_points'] = left_points
-                
-            right_points = []
-            for toup in pairs[letter]['right_sorted']:
-                pair_points = round(toup[1] / letter_count * tot_pair_points)
-                if pair_points >= pair_points_cutoff:
-                    right_points.append((toup[0], pair_points))
-            pairs[letter]['right_points'] = right_points
-                
+            keys = [('left', 'left_points'), ('right', 'right_points')]
+
+            for k in keys:
+                pair_points = 0
+                for pair_let in pairs[letter][k[0]]:
+                    pair_points = round(pairs[letter][k[0]][pair_let] / letter_count * tot_pair_points)
+                    if pair_points >= pair_points_cutoff:
+                        pairs[letter][k[1]].append((pair_let, pair_points))
+
+                # sort points array by pair count descending
+                pairs[letter][k[1]].sort(key=lambda x: x[1], reverse=True)
 
 
-    # count the letter pairs in a line, including BOL and EOL as a letter
+    # count the letter pairs in a line, including begin-of-line and end-of-line as letters
     def count_pairs(line:str):
 
         def increment(c:str, left:str, right:str):
@@ -125,12 +129,10 @@ def run():
                 # beginning of line
                 left = '^'  
                 right = line[i + 1]
-
             elif i == len(line) - 1:
                 # end of line
                 left = line[i - 1]
                 right = '^'
-
             else:
                 # somewhere in the middle of line
                 left = line[i - 1]
@@ -149,17 +151,11 @@ def run():
         count_pairs(line)
         # print(line)
 
-    # sort dicts into lists by count descending
-    sort_pairs_by_count(pairs)
-
     score(pairs, letter_count)
 
-    print('Processed ' + str(line_count) + ' lines and ' + str(letter_count) + ' letters')
+    # inspect(pairs)
     pretty_print(pairs)
 
     f.close()
 
 run()
-
-
-
