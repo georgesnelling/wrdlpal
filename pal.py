@@ -9,7 +9,7 @@ def run():
     line_max_len = 5
     tot_letter_points = 1000
     tot_pair_points = 10000
-    pair_points_cutoff = 10
+    pair_points_cutoff = 8
     letters = 'abcdefghijklmnopqrstuvwxyz'
     consonants = 'bcdfghjklmnpqrstvwxz'
     file_name = 'words.txt'
@@ -55,12 +55,13 @@ def run():
         return line.lower()
 
     
-    "Print Human-Readable Summary Output as Text"
+    # Print Human-Readable Summary Output as Text
     def pretty_print(pairs): 
 
         print('WordlePal')
         print('Letter Points:', tot_letter_points)
         print('Pair Points:', tot_pair_points)
+        print('Points Cutoff:', pair_points_cutoff)
         print('Words Processed:', line_count)
         print('Letters Processed:', letter_count)
 
@@ -74,14 +75,21 @@ def run():
             print('\n' + letter + ':', (pairs[letter]['points']))
 
             # Print the left and right pairs and their points
-            keys = [('Left: ', 'left_points'), ('cLeft: ', 'cleft_points'), 
-                    ('Right:', 'right_points'), ('cRight:', 'cright_points')]
-            for k in keys:
-                if (len(pairs[letter][k[1]])):
-                    print(k[0], end='')
-                    for point in pairs[letter][k[1]]:
-                        print(' ' + point[0] + ':' + str(point[1]), end='')
-                    print()
+            print_lines = [
+                {'title': 'cLeft: ', 'data': 'cleft_points'}, 
+                {'title': 'cRight:', 'data': 'cright_points'},
+                {'title': 'Left:  ', 'data': 'left_points'},
+                {'title': 'Right: ', 'data': 'right_points'}
+                ]
+
+            # Print each output line formatted, skipping empty lines
+            for line in print_lines: 
+                if len(pairs[letter][line['data']]) == 0:
+                    continue
+                print(line['title'], end='')
+                for pair_letter in pairs[letter][line['data']]:
+                    print(' ' + pair_letter[0] + ':' + str(pair_letter[1]), end='')
+                print()
 
     
     # Calculate normalized points for letters and pairs independent of sample size
@@ -92,20 +100,30 @@ def run():
             # Calculate the points for the letter itself
             pairs[letter]['points'] = round(pairs[letter]['count'] / letter_count * tot_letter_points)
 
-            keys = [('left', 'left_points', 'cleft_points'), ('right', 'right_points', 'cright_points')]
+            print_out= [{'side': 'left', 'target': 'cleft_points', 'consonants_only': True},
+                {'side': 'right', 'target': 'cright_points', 'consonants_only': True},
+                {'side': 'left', 'target': 'left_points', 'consonants_only': False},
+                {'side': 'right', 'target': 'right_points', 'consonants_only': False}]
 
-            for k in keys:
+            for out in print_out:
                 pair_points = 0
-                for pair_let in pairs[letter][k[0]]:
-                    pair_points = round(pairs[letter][k[0]][pair_let] / letter_count * tot_pair_points)
+                for pair_let in pairs[letter][out['side']]:
+
+                    # skip consonants only output for vowels as top-level letters
+                    if letter not in consonants and out['consonants_only']:
+                        continue
+
+                    # skip consonants only output for vowels as pair letters
+                    if pair_let not in consonants and out['consonants_only']:
+                        continue
+
+                    pair_points = round(pairs[letter][out['side']][pair_let] / letter_count * tot_pair_points)
                     if pair_points >= pair_points_cutoff:
-                        pairs[letter][k[1]].append((pair_let, pair_points))
-                        if letter in consonants and pair_let in consonants:
-                            pairs[letter][k[2]].append((pair_let, pair_points))
+                        pairs[letter][out['target']].append((pair_let, pair_points))
 
-
-                # sort points array by pair count descending
-                pairs[letter][k[1]].sort(key=lambda x: x[1], reverse=True)
+            # sort printout arays by pair count descending
+            for out in print_out:
+                pairs[letter][out['target']].sort(key=lambda x: x[1], reverse=True)
 
 
     # count the letter pairs in a line, including begin-of-line and end-of-line as letters
